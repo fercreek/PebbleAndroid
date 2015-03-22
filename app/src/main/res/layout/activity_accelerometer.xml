@@ -40,15 +40,4 @@
         android:text="@string/z_axis_title"
         android:textSize="@android:dimen/notification_large_icon_height" />
 
-    <com.androidplot.xy.XYPlot
-        android:id="@+id/dynamicPlot"
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_marginTop="10dp"
-        android:background="#FFFFFF"
-        android:layout_weight="0.62"
-        title="@string/dynamic_plot" />
-
 </LinearLayout>
