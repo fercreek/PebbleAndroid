@@ -9,6 +9,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.androidplot.xy.BoundaryMode;
@@ -18,6 +19,11 @@ import com.androidplot.xy.XYPlot;
 import com.getpebble.android.kit.PebbleKit;
 import com.getpebble.android.kit.util.PebbleDictionary;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.Locale;
 import java.util.UUID;
@@ -55,6 +61,9 @@ public class AccelerometerActivity extends Activity {
     private static float cur_y = 0;
     private static float cur_z = 0;
 
+    private DatagramSocket socket = null;
+    private Button btn;
+
 
     private PebbleKit.PebbleDataReceiver dataReceiver;
 
@@ -82,6 +91,49 @@ public class AccelerometerActivity extends Activity {
         vector[VECTOR_INDEX_Z] = 0;
 
         PebbleKit.startAppOnPebble(getApplicationContext(), PEBBLEPOINTER_UUID);
+
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    while(true) {
+                        String coords = norm_x + "," + norm_z;
+                        sleep(50);
+                        sendPacket(coords);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        thread.start();
+
+    }
+
+    private void sendPacket(String message) {
+        byte[] messageData = message.getBytes();
+//        ipInput.setText("192.168.42.101");
+//        portInput.setText("12345");
+
+        try {
+//            InetAddress addr = InetAddress.getByName(ipInput.getText().toString());
+//            int port = Integer.parseInt(portInput.getText().toString());
+//            InetAddress addr = InetAddress.getByName("10.12.171.192");
+            InetAddress addr = InetAddress.getByName("10.12.173.15"); //sifu
+            int port = Integer.parseInt("12345");
+            DatagramPacket sendPacket = new DatagramPacket(messageData, 0, messageData.length, addr, port);
+            if (socket != null) {
+                socket.disconnect();
+                socket.close();
+            }
+            socket = new DatagramSocket(port);
+            socket.send(sendPacket);
+        } catch (UnknownHostException e) {
+            Log.e("MainActivity sendPacket", "getByName failed");
+        } catch (IOException e) {
+            Log.e("MainActivity sendPacket", "send failed: " + e.toString());
+        }
     }
 
     @Override
@@ -208,6 +260,13 @@ public class AccelerometerActivity extends Activity {
         // Dispatch touch event to view
         View v = getWindow().getDecorView().findViewById(android.R.id.content);
         v.dispatchTouchEvent(motionEvent);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        socket.disconnect();
+        socket.close();
     }
 
 }
